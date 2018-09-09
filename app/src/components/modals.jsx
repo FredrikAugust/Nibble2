@@ -9,13 +9,9 @@ import { Keyboard } from './Keyboard.jsx';
  *  proxy : callforward, an Observable
  */
 export class ClickProxy extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
     if (this.props.proxy) {
-      this.sub = this.props.proxy.subscribe((a) => {
+      this.sub = this.props.proxy.subscribe(() => {
         if (this.props.onClick) { this.props.onClick(new MouseEvent('PROXY_CLICK')); }
       });
     }
@@ -48,11 +44,17 @@ export const HelpModal = ({ trigger }) => {
           profil.
         </p>
         <b>Det er tomt for en vare, hva gjør jeg?</b>
-        <p>Det er funksjonalitet for automatisk varsling under utvikling men
-          foreløpig må du sende mail til trikom@online.ntnu.no.</p>
+        <p>
+          Det er funksjonalitet for automatisk varsling under utvikling men
+          foreløpig må du sende mail til trikom@online.ntnu.no.
+        </p>
         <b>Jeg fant en feil, hva gjør jeg?</b>
-        <p>Legg til en issue på github.com/dotKom/nibble2/ eller send en mail
-          til dotkom@online.ntnu.no</p>
+        <p>
+          Legg til en issue på
+          <a href="https://github.com/dotkom/nibble2"> github.com/dotkom/nibble2/ </a>
+          eller send en mail til
+          <a href="mailto:dotkom@online.ntnu.no"> dotkom@online.ntnu.no</a>.
+        </p>
       </div>
     </Modal>
   );
@@ -104,7 +106,16 @@ export class AdjustSaldoModal extends React.Component {
       );
     }
 
-    const inField = <input placeholder="" name="asaldo" value={this.state.inval} disabled={this.state.indisable} onChange={a => this.inputChange(a)} type="number" />;
+    const inField = (
+      <input
+        placeholder=""
+        name="asaldo"
+        value={this.state.inval}
+        disabled={this.state.indisable}
+        onChange={a => this.inputChange(a)}
+        type="number"
+      />
+    );
 
     return (
       <Modal
@@ -112,15 +123,37 @@ export class AdjustSaldoModal extends React.Component {
         header="Juster saldo"
         trigger={this.props.trigger}
         modalOptions={{
-          ready: () => this.setValue(0, true)
+          ready: () => this.setValue(0, true),
         }}
         actions={[
           <Button waves="light" modal="close" flat>Avbryt</Button>,
-          <Button className="adjust-button" waves="light" onClick={() => { this.props.onSubmit(parseInt(this.state.inval)); }} modal="close">Sett inn</Button>,
-          <Button className="adjust-button" waves="light" onClick={() => { this.props.onSubmit(-1 * parseInt(this.state.inval)); }} modal="close">Ta ut</Button>]}>
+          <Button
+            className="adjust-button"
+            waves="light"
+            onClick={
+              () => { this.props.onSubmit(parseInt(this.state.inval)); }
+            }
+            modal="close"
+          >
+            Sett inn
+          </Button>,
+          <Button
+            className="adjust-button"
+            waves="light"
+            onClick={
+              () => { this.props.onSubmit(-1 * parseInt(this.state.inval)); }
+            }
+            modal="close"
+          >
+            Ta ut
+          </Button>,
+        ]}
+      >
         <div className="modalCash">
           <p className="modalCashDesc">
-            Legg til/ta ut penger fra det røde pengeskrinet til høyre, og juster så saldo her tilsvarende.
+            Legg til/ta ut penger for å manuelt justere saldo. Dette skal kun
+            brukes i spesielle tilfeller etter fjerningen av det røde
+            pengeskrinet.
           </p>
           <br />
           <div className="radio-group">
@@ -151,22 +184,22 @@ export class AdjustSaldoModal extends React.Component {
 export class CheckoutModal extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       current_status: props.status || 'await',
     };
+
     this.c_interval = null;
     this.closeState = true;
   }
 
-  componentWillUnmount() {
-    clearInterval(this.c_interval);
-  }
   componentWillReceiveProps(props) {
     this.setState(Object.assign(this.state, {
       current_status: props.status || 'await',
     }));
+
     clearInterval(this.c_interval);
-    if (props.status == 'success') {
+    if (props.status === 'success') {
       this.c_interval = setTimeout(() => {
         this.setState(Object.assign(this.state, {
           current_status: 'complete',
@@ -174,6 +207,11 @@ export class CheckoutModal extends React.Component {
       }, 1000);
     }
   }
+
+  componentWillUnmount() {
+    clearInterval(this.c_interval);
+  }
+
   render() {
     const svgClass = ({
       await: ['', '', ''],
@@ -197,6 +235,7 @@ export class CheckoutModal extends React.Component {
     })[this.state.current_status];
 
     const orderList = [];
+
     for (const o of this.props.orders) {
       orderList.push(
         <div key={o.item.id}>
@@ -209,6 +248,7 @@ export class CheckoutModal extends React.Component {
         </div>,
       );
     }
+
     return (
       <Modal
         header={statusMessage}
@@ -217,8 +257,25 @@ export class CheckoutModal extends React.Component {
           complete: () => this.props.onSubmit(this.closeState)
         }}
         actions={[
-          <Button waves="light" onClick={() => this.closeState = false} modal="close">Ny handel</Button>,
-          <Button waves="light" onClick={() => this.closeState = true} modal="close" flat>Logg ut nå ({this.props.time || 0})</Button>,
+          <Button
+            waves="light"
+            onClick={
+              () => { this.closeState = false; }
+            }
+            modal="close"
+          >
+            Ny handel
+          </Button>,
+          <Button
+            waves="light"
+            onClick={
+              () => { this.closeState = true; }
+            }
+            modal="close"
+            flat
+          >
+            Logg ut nå ({this.props.time || 0})
+          </Button>,
           this.props.extraClose,
         ]}
       >
@@ -264,6 +321,31 @@ export class RegModal extends React.Component {
     };
   }
 
+  onOpen() {
+    this.setState(Object.assign(this.state, {
+      username: '',
+      password: '',
+      showQR: false,
+      setRfidUrl: '',
+    }));
+    if (this.props.onOpen) {
+      this.props.onOpen();
+    }
+  }
+
+  onClose() {
+    this.setState(Object.assign(this.state, {
+      username: '',
+      password: '',
+      showQR: false,
+      setRfidUrl: '',
+    }));
+
+    if (this.props.onClose) {
+      this.props.onClose();
+    }
+  }
+
   handleSubmit(e) {
     if (this.props.onSubmit) {
       this.props.onSubmit(this.state.username, this.state.password);
@@ -272,7 +354,7 @@ export class RegModal extends React.Component {
   }
 
   handleGetQr(e) {
-    if (e) e.preventDefault();
+    if (e) { e.preventDefault(); }
 
     // Only try to submit if we haven't already.
     if (!this.state.setRfidUrl) {
@@ -300,41 +382,23 @@ export class RegModal extends React.Component {
       } else {
         this.setState({ setRfidUrl: res.url });
       }
-    }, (err) => {
-      Materialize.toast('Noe gikk galt under forespørselen. Vennligst prøv igjen, eller kontakt dotkom.', 5000);
+    }, (/* err */) => {
+      Materialize.toast(
+        'Noe gikk galt under forespørselen. Vennligst prøv igjen, eller kontakt dotkom.',
+        5000,
+      );
     });
   }
 
-  onClose() {
+  set username(username) {
     this.setState(Object.assign(this.state, {
-      username: '',
-      password: '',
-      showQR: false,
-      setRfidUrl: '',
-    }));
-    if (this.props.onClose) {
-      this.props.onClose();
-    }
-  }
-  onOpen() {
-    this.setState(Object.assign(this.state, {
-      username: '',
-      password: '',
-      showQR: false,
-      setRfidUrl: '',
-    }));
-    if (this.props.onOpen) {
-      this.props.onOpen();
-    }
-  }
-  set username(u) {
-    this.setState(Object.assign(this.state, {
-      username: u,
+      username,
     }));
   }
-  set password(u) {
+
+  set password(password) {
     this.setState(Object.assign(this.state, {
-      password: u,
+      password,
     }));
   }
 
@@ -357,23 +421,30 @@ export class RegModal extends React.Component {
           <Button waves="light" modal="close" flat>Avbryt</Button>,
         ]}
       >
-        <h5>Fyll inn ditt brukernavn og passord for å knytte RFID-kortet opp mot din online.ntnu.no bruker</h5>
+        <h5>
+          Fyll inn ditt brukernavn og passord for å knytte RFID-kortet opp mot
+          din online.ntnu.no bruker
+        </h5>
+
         {!this.state.setRfidUrl && <div className="col input-field">
-          <Keyboard onChange={(v)=> this.username = v}>
+          <Keyboard onChange={(v) => { this.username = v; }}>
             <input value={this.state.username} type="text" />
           </Keyboard>
           <label>Brukernavn</label>
         </div>}
         {(!this.state.setRfidUrl && !this.state.showQR) && <div className="col input-field">
-          <Keyboard onChange={(v) => this.password = v}>
+          <Keyboard onChange={(v) => { this.password = v; }}>
             <input value={this.state.password} type="password" />
           </Keyboard>
           <label>Passord</label>
         </div>}
 
         <Row>
-          <p>Du kan skrive inn kun brukernavn for å generere en QR kode som du kan scanne for å koble sammen
-            RFID-kortet ditt med Online.ntnu.no-brukeren din.</p>
+          <p>
+            Du kan skrive inn kun brukernavn for å generere en QR kode som du
+            kan scanne for å koble sammen RFID-kortet ditt med
+            Online.ntnu.no-brukeren din.
+          </p>
           <Col>
             <Button
               disabled={!this.state.username || this.state.username.length === 0}
@@ -399,7 +470,6 @@ export class RegModal extends React.Component {
             >Send linken på e-post til brukeren min</Button>
           </Col>
         </Row>
-
       </Modal>
     );
   }
